@@ -234,7 +234,7 @@ const Payments = {
               <div style="font-size: 0.875rem; color: var(--text-secondary);">${project.workType} work</div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem; color: var(--text-primary);">
               <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                 <span>Job Value:</span>
                 <span>$${project.jobValue.toLocaleString()}</span>

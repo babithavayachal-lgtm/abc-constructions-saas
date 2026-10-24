@@ -237,8 +237,8 @@ const MaintenanceGuide = {
             <h3>Maintenance Guide — ${guide.id}</h3>
             <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
           </div>
-          <div class="modal-body" style="padding: 1.5rem; background: white;">
-            <div style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; background: #f8fafc;">
+          <div class="modal-body" style="padding: 1.5rem; background: var(--bg-modal);">
+            <div style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; background: var(--bg-body);">
               ${content}
             </div>
             <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">

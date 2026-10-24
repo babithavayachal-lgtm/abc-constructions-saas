@@ -46,7 +46,7 @@ const CustomerPortal = {
 
       <!-- Info -->
       <div class="section">
-        <div class="table-container" style="padding: 1.5rem; background: #f8fafc;">
+        <div class="table-container" style="padding: 1.5rem; background: var(--bg-body);">
           <h3 style="margin-top: 0; color: var(--text-primary);">What happens next?</h3>
           <ol style="color: var(--text-secondary); line-height: 1.8; margin: 0;">
             <li>Our sales team receives your request</li>

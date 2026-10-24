@@ -425,15 +425,19 @@ const App = {
     const html = document.documentElement;
 
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      html.setAttribute('data-theme', 'dark');
-      toggleBtn.textContent = '☀️';
+    // The inline script in index.html has already set data-theme before first paint;
+    // trust the current attribute so the two never disagree.
+    const currentTheme = html.getAttribute('data-theme');
+
+    if (!currentTheme) {
+      html.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
     }
+    toggleBtn.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
 
     toggleBtn.addEventListener('click', () => {
       const isDark = html.getAttribute('data-theme') === 'dark';
       if (isDark) {
-        html.removeAttribute('data-theme');
+        html.setAttribute('data-theme', 'light');
         localStorage.setItem('theme', 'light');
         toggleBtn.textContent = '🌙';
       } else {

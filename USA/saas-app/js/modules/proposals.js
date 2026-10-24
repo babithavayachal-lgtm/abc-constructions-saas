@@ -224,20 +224,20 @@ const Proposals = {
           <h1 style="margin: 0; font-size: 1.5rem;">ABC Constructions</h1>
           <p style="margin: 0.5rem 0 0; opacity: 0.9;">Project Proposal</p>
         </div>
-        <div style="padding: 2rem; border: 1px solid #e2e8f0; border-top: none; background: #f8fafc;">
-          <h2 style="margin-top: 0; color: #0f172a;">Your Project Details</h2>
+        <div style="padding: 2rem; border: 1px solid var(--border); border-top: none; background: var(--bg-body); color: var(--text-primary);">
+          <h2 style="margin-top: 0; color: var(--text-primary);">Your Project Details</h2>
           <p><strong>Project ID:</strong> ${project.id}</p>
           <p><strong>Work Type:</strong> ${project.workType}</p>
           <p><strong>Description:</strong> ${project.description || '—'}</p>
           <p><strong>Job Value:</strong> $${project.jobValue.toLocaleString()}</p>
           <p><strong>50% Deposit Due:</strong> $${deposit}</p>
           <p><strong>Sales Person:</strong> ${AppData.getSalesPersonName(project.salesPerson)}</p>
-          <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #cbd5e1;">
-          <p style="color: #64748b; font-size: 0.9rem;">Please review the work details above. If everything looks correct, click Approve to proceed.</p>
+          <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Please review the work details above. If everything looks correct, click Approve to proceed.</p>
         </div>
-        <div style="padding: 2rem; border: 1px solid #e2e8f0; border-top: none; background: white; display: flex; gap: 1rem; justify-content: center; border-radius: 0 0 8px 8px;">
-          <button onclick="Proposals.simulateCustomerApprove('${project.id}')" style="flex:1; padding: 1rem; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">✅ Approve</button>
-          <button onclick="Proposals.simulateCustomerDeny('${project.id}')" style="flex:1; padding: 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">❌ Deny</button>
+        <div style="padding: 2rem; border: 1px solid var(--border); border-top: none; background: var(--bg-card); display: flex; gap: 1rem; justify-content: center; border-radius: 0 0 8px 8px;">
+          <button onclick="Proposals.simulateCustomerApprove('${project.id}')" style="flex:1; padding: 1rem; background: var(--success-solid); color: #ffffff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">✅ Approve</button>
+          <button onclick="Proposals.simulateCustomerDeny('${project.id}')" style="flex:1; padding: 1rem; background: var(--danger-solid); color: #ffffff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">❌ Deny</button>
         </div>
       </div>
     `;
