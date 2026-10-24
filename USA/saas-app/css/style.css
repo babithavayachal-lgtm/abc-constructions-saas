@@ -372,9 +372,10 @@ input, select {
   background-color: var(--bg-header);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border);
 }
 
 .table tbody tr:hover {
