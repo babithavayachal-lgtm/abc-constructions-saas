@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABC Constructions — Enterprise Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <h2>ABC Constructions</h2>
+      <p class="tagline">Enterprise Solution</p>
+    </div>
+    <nav class="nav">
+      <a href="#" class="nav-link active" data-page="dashboard">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a href="#" class="nav-link" data-page="interest-forms">
+        <span class="icon">📝</span> Interest Forms
+      </a>
+      <a href="#" class="nav-link" data-page="proposals">
+        <span class="icon">📄</span> Proposals
+      </a>
+      <a href="#" class="nav-link" data-page="jobs">
+        <span class="icon">🏗️</span> Jobs (WIP)
+      </a>
+      <a href="#" class="nav-link" data-page="completed">
+        <span class="icon">✅</span> Completed
+      </a>
+      <a href="#" class="nav-link" data-page="payments">
+        <span class="icon">💳</span> Payments
+      </a>
+      <a href="#" class="nav-link" data-page="permits">
+        <span class="icon">📋</span> Permits
+      </a>
+      <a href="#" class="nav-link" data-page="scheduling">
+        <span class="icon">📅</span> Scheduling
+      </a>
+      <a href="#" class="nav-link" data-page="change-orders">
+        <span class="icon">📝</span> Change Orders
+      </a>
+      <a href="#" class="nav-link" data-page="crew-dispatch">
+        <span class="icon">👷</span> Crew Dispatch
+      </a>
+      <a href="#" class="nav-link" data-page="work-closure">
+        <span class="icon">📄</span> Work Closure
+      </a>
+      <a href="#" class="nav-link" data-page="maintenance-guide">
+        <span class="icon">📘</span> Maintenance Guide
+      </a>
+      <a href="#" class="nav-link" data-page="inventory">
+        <span class="icon">📦</span> Inventory
+      </a>
+      <a href="#" class="nav-link" data-page="sales">
+        <span class="icon">👥</span> Sales Team
+      </a>
+      <a href="#" class="nav-link" data-page="settings">
+        <span class="icon">⚙️</span> Settings
+      </a>
+      <a href="#" class="nav-link" data-page="notifications">
+        <span class="icon">𔔧</span> Notifications
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1 id="page-title">Dashboard</h1>
+        <p id="page-subtitle">Overview of all active and completed projects</p>
+      </div>
+      <div class="top-bar-right">
+        <div class="user-profile">
+          <span class="user-avatar">A</span>
+          <span class="user-name">Admin User</span>
+        </div>
+        <button class="btn btn-primary" id="btn-add-project">
+          + New Project
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Content Area -->
+    <div class="dashboard-content" id="dashboard-content">
+      <!-- Content will be injected by JS router -->
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modal-overlay"></div>
+
+  <div class="modal" id="add-project-modal">
+    <div class="modal-header">
+      <h3>Create New Project</h3>
+      <button class="modal-close" id="close-add-project">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="add-project-form">
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" name="customerName" placeholder="Enter customer name" required>
+        </div>
+        <div class="form-group">
+          <label>Work Type</label>
+          <select name="workType" required>
+            <option value="">Select work type</option>
+            <option value="drainage">Drainage</option>
+            <option value="lawns">Lawns & Landscaping</option>
+            <option value="lights">Trim Lights</option>
+            <option value="mixed">Mixed Work</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Job Value ($)</label>
+          <input type="number" name="jobValue" placeholder="0.00" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Sales Person</label>
+          <select name="salesPerson" required>
+            <option value="">Select sales person</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Scheduled Date</label>
+          <input type="date" name="scheduledDate" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create Project</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/modules/app.js"></script>
+  <script src="js/modules/router.js"></script>
+  <script src="js/modules/data.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/interest-forms.js"></script>
+  <script src="js/modules/proposals.js"></script>
+  <script src="js/modules/jobs.js"></script>
+  <script src="js/modules/completed.js"></script>
+  <script src="js/modules/payments.js"></script>
+  <script src="js/modules/permits.js"></script>
+  <script src="js/modules/scheduling.js"></script>
+  <script src="js/modules/change-orders.js"></script>
+  <script src="js/modules/crew-dispatch.js"></script>
+  <script src="js/modules/work-closure.js"></script>
+  <script src="js/modules/maintenance-guide.js"></script>
+  <script src="js/modules/inventory.js"></script>
+  <script src="js/modules/sales.js"></script>
+  <script src="js/modules/settings.js"></script>
+  <script src="js/modules/notifications.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
