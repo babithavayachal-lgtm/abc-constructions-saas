@@ -424,27 +424,34 @@ const App = {
     const toggleBtn = document.getElementById('theme-toggle');
     const html = document.documentElement;
 
-    const savedTheme = localStorage.getItem('theme');
-    // The inline script in index.html has already set data-theme before first paint;
-    // trust the current attribute so the two never disagree.
-    const currentTheme = html.getAttribute('data-theme');
+    // The inline script in index.html has already applied the theme class before
+    // first paint; read it back so the two can never disagree.
+    const isNight = () => html.classList.contains('theme-night');
 
-    if (!currentTheme) {
-      html.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
-    }
-    toggleBtn.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+    const applyTheme = (theme) => {
+      html.classList.remove('theme-day', 'theme-night');
+      html.classList.add('theme-' + theme);
+      try {
+        localStorage.setItem('konark_theme', theme);
+      } catch (e) { /* storage unavailable — theme still applies for this session */ }
+
+      if (theme === 'night') {
+        toggleBtn.title = 'Switch to Day Mode (Light)';
+        toggleBtn.setAttribute('aria-label', 'Switch to Day Mode');
+        toggleBtn.querySelector('.theme-toggle-icon').textContent = '☀️';
+        toggleBtn.querySelector('.theme-toggle-label').textContent = 'Day';
+      } else {
+        toggleBtn.title = 'Switch to Night Mode (Dark)';
+        toggleBtn.setAttribute('aria-label', 'Switch to Night Mode');
+        toggleBtn.querySelector('.theme-toggle-icon').textContent = '🌙';
+        toggleBtn.querySelector('.theme-toggle-label').textContent = 'Night';
+      }
+    };
+
+    applyTheme(isNight() ? 'night' : 'day');
 
     toggleBtn.addEventListener('click', () => {
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        html.setAttribute('data-theme', 'light');
-        localStorage.setItem('theme', 'light');
-        toggleBtn.textContent = '🌙';
-      } else {
-        html.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-        toggleBtn.textContent = '☀️';
-      }
+      applyTheme(isNight() ? 'day' : 'night');
     });
   },
 };
