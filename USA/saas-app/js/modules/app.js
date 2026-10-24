@@ -11,6 +11,7 @@ const App = {
     this.setupModals();
     this.setupAddProjectForm();
     this.setupInterestForm();
+    this.setupCustomerPortalForm();
     this.setupPermitForm();
     this.setupScheduleForm();
     this.setupChangeOrderForm();
@@ -44,6 +45,7 @@ const App = {
     const titles = {
       dashboard: 'Dashboard',
       interestForms: 'Interest Forms',
+      customerPortal: 'Customer Portal',
       proposals: 'Proposals',
       jobs: 'Jobs (WIP)',
       completed: 'Completed Projects',
@@ -76,6 +78,9 @@ const App = {
         break;
       case 'interestForms':
         content.innerHTML = InterestForms.render();
+        break;
+      case 'customerPortal':
+        content.innerHTML = CustomerPortal.render();
         break;
       case 'proposals':
         content.innerHTML = Proposals.render();
@@ -171,6 +176,44 @@ const App = {
     if (cancelBtn) {
       cancelBtn.addEventListener('click', () => {
         document.getElementById('interest-form').reset();
+      });
+    }
+  },
+
+  setupCustomerPortalForm() {
+    const form = document.getElementById('customer-interest-form');
+    const cancelBtn = document.getElementById('cancel-customer-form');
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        const newForm = {
+          id: 'IF-' + (1000 + AppData.interestForms.length + 1),
+          customerName: 'Website Customer',
+          phone: formData.get('phone'),
+          zipCode: formData.get('zipCode'),
+          workType: formData.get('workType'),
+          description: `Customer requested ${formData.get('workType')} work via website interest form`,
+          status: 'new',
+          submittedAt: new Date().toISOString(),
+          assignedSalesPerson: AppData.salesTeam[0].id,
+          source: 'website',
+        };
+
+        AppData.interestForms.push(newForm);
+        form.reset();
+
+        alert(`Thank you! Your interest form has been submitted.\n\nWork Type: ${formData.get('workType')}\nPhone: ${formData.get('phone')}\nZip Code: ${formData.get('zipCode')}\n\nOur sales team will call you back shortly.`);
+
+        App.renderPage('interestForms');
+      });
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        document.getElementById('customer-interest-form').reset();
       });
     }
   },
