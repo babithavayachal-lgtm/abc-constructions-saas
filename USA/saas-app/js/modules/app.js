@@ -17,6 +17,7 @@ const App = {
     this.setupChangeOrderForm();
     this.setupMaintenanceGuideForm();
     this.setupTestNotificationForm();
+    this.setupThemeToggle();
     Router.init();
     Dashboard.render();
   },
@@ -417,5 +418,29 @@ const App = {
         document.getElementById('test-notification-form').reset();
       });
     }
+  },
+
+  setupThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      html.setAttribute('data-theme', 'dark');
+      toggleBtn.textContent = '☀️';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        html.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        toggleBtn.textContent = '🌙';
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        toggleBtn.textContent = '☀️';
+      }
+    });
   },
 };
