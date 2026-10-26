@@ -340,20 +340,25 @@ const Proposals = {
     const overlay = document.getElementById('modal-overlay');
     if (!overlay) return;
 
+    const recipient = project.email || 'babithavayachal@gmail.com';
+    const emailSubject = `Proposal Approved: 50% Deposit Payment Link & Official Proposal PDF - ABC Constructions (${project.id})`;
+    const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipient)}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(body)}`;
+    const mailtoUrl = `mailto:${recipient}?from=${encodeURIComponent(fromEmail)}&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(body)}`;
+
     overlay.innerHTML = `
       <div class="modal-overlay" style="display: flex; justify-content: center; align-items: center; padding: 1rem;">
-        <div class="modal" style="display: block; max-width: 580px;">
+        <div class="modal" style="display: block; max-width: 600px; width: 100%;">
           <div class="modal-header">
-            <h3>✉️ 50% Deposit Email Dispatched</h3>
+            <h3>✉️ 50% Deposit & Proposal PDF Email</h3>
             <button class="modal-close" onclick="Proposals.closeCustomerPortal()">&times;</button>
           </div>
           <div class="modal-body" style="padding: 1.5rem;">
             <div style="background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
               <div style="font-weight: 700; color: #047857; margin-bottom: 0.25rem;">
-                ✅ Approval Email Generated & Sent via ${fromEmail}
+                ✅ Ready to Send from <strong>${fromEmail}</strong>
               </div>
               <div style="font-size: 0.8125rem; color: var(--text-secondary);">
-                Recipient: <strong>${project.customerName}</strong> (${project.email || 'Customer on file'})
+                Recipient: <strong>${project.customerName}</strong> (<span id="modal-recipient-display">${recipient}</span>)
               </div>
             </div>
 
@@ -363,29 +368,39 @@ const Proposals = {
                 <strong>$${Number(fullAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</strong>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9375rem; color: var(--primary); font-weight: 700;">
-                <span>50% Deposit Due:</span>
+                <span>Exact 50% Deposit Due:</span>
                 <span>$${Number(deposit).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-muted);">
-                <span>Company Sender:</span>
-                <span>${fromEmail}</span>
+                <span>Proposal PDF Link:</span>
+                <a href="${paymentLink}&download=pdf" target="_blank" style="color:var(--info);">📥 Download PDF</a>
               </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.375rem;">Customer Email Address:</label>
+              <input type="email" id="email-recipient-input" value="${recipient}" style="width: 100%; padding: 0.5rem; font-size: 0.875rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text-primary);" oninput="Proposals.updateEmailLinks('${project.id}', '${fromEmail}')">
             </div>
 
             <div class="form-group" style="margin-bottom: 1.25rem;">
               <label style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.375rem;">50% Payment Link:</label>
-              <div style="display: flex; gap: 0.5rem;">
-                <input type="text" value="${paymentLink}" readonly style="flex: 1; padding: 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text-primary);">
-                <button class="btn btn-secondary" onclick="copyLink('${paymentLink}')" style="white-space: nowrap;">Copy Link</button>
-              </div>
+              <input type="text" value="${paymentLink}" readonly style="width: 100%; padding: 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text-primary);">
             </div>
 
-            <div style="display: flex; gap: 0.75rem;">
-              <a href="mailto:${project.email || ''}?from=${encodeURIComponent(fromEmail)}&subject=${encodeURIComponent(`Proposal Approved: 50% Deposit Payment Link - ABC Constructions (${project.id})`)}&body=${encodeURIComponent(body)}" class="btn btn-primary" style="flex: 1; text-align: center; text-decoration: none; padding: 0.625rem;" target="_blank">
-                ✉️ Open in Email Client
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <a id="btn-gmail-web" href="${gmailComposeUrl}" target="_blank" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; font-weight: 700; text-decoration: none; background: #ea4335; border: none;">
+                🔴 Open & Send with Gmail Web (${fromEmail})
               </a>
-              <button class="btn btn-secondary" onclick="Proposals.closeCustomerPortal()" style="flex: 1;">
-                Done
+              <div style="display: flex; gap: 0.5rem;">
+                <a id="btn-mailto" href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="flex: 1; text-align: center; text-decoration: none; padding: 0.625rem;">
+                  ✉️ Default Mail App
+                </a>
+                <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(\`${body.replace(/`/g, '\\`')}\`); alert('Email body copied to clipboard!');" style="flex: 1;">
+                  📋 Copy Full Email
+                </button>
+              </div>
+              <button class="btn" onclick="Proposals.closeCustomerPortal()" style="background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 0.5rem;">
+                Close
               </button>
             </div>
           </div>
@@ -393,6 +408,45 @@ const Proposals = {
       </div>
     `;
     overlay.style.display = 'flex';
+  },
+
+  updateEmailLinks(projectId, fromEmail) {
+    const input = document.getElementById('email-recipient-input');
+    const to = input ? input.value : 'babithavayachal@gmail.com';
+    const project = AppData.projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const fullAmount = Number(project.jobValue).toFixed(2);
+    const deposit = (project.jobValue * 0.5).toFixed(2);
+    const remaining = (project.jobValue * 0.5).toFixed(2);
+    const salesPerson = AppData.getSalesPersonName(project.salesPerson);
+    const paymentLink = window.location.origin + '/proposal.html?id=' + project.id;
+    const subject = `Proposal Approved: 50% Deposit Payment Link & Official Proposal PDF - ABC Constructions (${project.id})`;
+
+    const body =
+      `Dear ${project.customerName},\n\n` +
+      `Thank you for approving the proposal for your ${project.workType} work with The ABC Constructions Company.\n\n` +
+      `FINANCIAL SUMMARY:\n` +
+      `  • Full Job Amount: $${Number(fullAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • 50% Deposit Due Now: $${Number(deposit).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • Remaining Balance: $${Number(remaining).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • Assigned Sales Rep: ${salesPerson}\n\n` +
+      `SECURE 50% PAYMENT LINK:\n` +
+      `${paymentLink}\n\n` +
+      `OFFICIAL PROPOSAL PDF DOCUMENT:\n` +
+      `${paymentLink}&download=pdf\n\n` +
+      `Best regards,\nThe ABC Constructions Company USA\nFrom: ${fromEmail}`;
+
+    const gmailBtn = document.getElementById('btn-gmail-web');
+    if (gmailBtn) {
+      gmailBtn.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+    const mailtoBtn = document.getElementById('btn-mailto');
+    if (mailtoBtn) {
+      mailtoBtn.href = `mailto:${to}?from=${encodeURIComponent(fromEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+    const disp = document.getElementById('modal-recipient-display');
+    if (disp) disp.textContent = to;
   },
 
   notifyDenial(project) {

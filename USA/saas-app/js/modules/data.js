@@ -186,7 +186,7 @@ const AppData = {
     {
       id: 'PJ-1006',
       customerName: 'Sarah Jenkins',
-      email: 'sarah.jenkins@example.com',
+      email: 'babithavayachal@gmail.com',
       phone: '(555) 789-2341',
       address: '742 Evergreen Terrace, Springfield, USA',
       workType: 'drainage',
