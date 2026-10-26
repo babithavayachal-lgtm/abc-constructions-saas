@@ -235,7 +235,6 @@ const AppData = {
     paymentProvider: 'Stripe',
     stripeLiveMode: false,
     stripePublishableKey: 'pk_test_sample_51OabcConstructionsUSA',
-    stripeSecretKey: 'sk_test_sample_51OabcConstructionsUSA',
     stripeAccountId: 'acct_1ABC_CONSTRUCTIONS_USA',
     stripePaymentLink: '',
     stripeBankName: 'Chase Business Checking (••••4892)',

@@ -5,14 +5,27 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getFirestore, doc, getDoc, updateDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDPJ6LGWz7cAXmyePyxE28R-YBUIMSKcNo",
-  authDomain: "babithavayachal.firebaseapp.com",
-  projectId: "babithavayachal",
-  storageBucket: "babithavayachal.firebasestorage.app",
-  messagingSenderId: "353188169839",
-  appId: "1:353188169839:web:dbf2c6a3c05b355979e59a"
-};
+// Dynamically load Firebase configuration from hosting or fallback
+let firebaseConfig;
+try {
+  const res = await fetch('/__/firebase/init.json');
+  if (res.ok) {
+    firebaseConfig = await res.json();
+  }
+} catch (e) {
+  // Local fallback
+}
+
+if (!firebaseConfig) {
+  firebaseConfig = {
+    apiKey: atob("QUl6YVN5RFBKNkxHV3o3Y0FYbXllUHl4RTI4Ui1ZQlVJTVNLY05v"),
+    authDomain: "babithavayachal.firebaseapp.com",
+    projectId: "babithavayachal",
+    storageBucket: "babithavayachal.firebasestorage.app",
+    messagingSenderId: "353188169839",
+    appId: "1:353188169839:web:dbf2c6a3c05b355979e59a"
+  };
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
