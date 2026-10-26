@@ -5,10 +5,17 @@
 
 const App = {
   currentPage: 'dashboard',
+  session: {
+    isSignedIn: false,
+    staffId: null,
+    staffName: null,
+    systemRole: 'Staff',
+  },
 
   init() {
     this.setupNavigation();
     this.setupModals();
+    this.setupAuth();
     this.setupAddProjectForm();
     this.setupInterestForm();
     this.setupCustomerPortalForm();
@@ -20,6 +27,7 @@ const App = {
     this.setupThemeToggle();
     Router.init();
     Dashboard.render();
+    this.updateAuthUI();
   },
 
   setupNavigation() {
@@ -45,19 +53,20 @@ const App = {
     // Update page title
     const titles = {
       dashboard: 'Dashboard',
-      interestForms: 'Interest Forms',
-      customerPortal: 'Customer Portal',
+      'interest-forms': 'Interest Forms',
+      'customer-portal': 'Customer Portal',
       proposals: 'Proposals',
       jobs: 'Jobs (WIP)',
       completed: 'Completed Projects',
       payments: 'Payments',
       permits: 'Permits',
       scheduling: 'Scheduling',
-      changeOrders: 'Change Orders',
-      crewDispatch: 'Crew Dispatch',
-      workClosure: 'Work Closure',
-      maintenanceGuide: 'Maintenance Guide',
+      'change-orders': 'Change Orders',
+      'crew-dispatch': 'Crew Dispatch',
+      'work-closure': 'Work Closure',
+      'maintenance-guide': 'Maintenance Guide',
       notifications: 'Notifications Center',
+      staff: 'Staff Management',
       inventory: 'Inventory',
       sales: 'Sales Team',
       settings: 'Settings',
@@ -77,10 +86,10 @@ const App = {
       case 'dashboard':
         Dashboard.render();
         break;
-      case 'interestForms':
+      case 'interest-forms':
         content.innerHTML = InterestForms.render();
         break;
-      case 'customerPortal':
+      case 'customer-portal':
         content.innerHTML = CustomerPortal.render();
         break;
       case 'proposals':
@@ -115,6 +124,9 @@ const App = {
         break;
       case 'notifications':
         content.innerHTML = Notifications.render();
+        break;
+      case 'staff':
+        content.innerHTML = Staff.render();
         break;
       case 'inventory':
         content.innerHTML = Inventory.render();
@@ -169,7 +181,9 @@ const App = {
 
         AppData.interestForms.push(newForm);
         form.reset();
-        App.renderPage('interestForms');
+        AppData.save();
+        FirestoreSync.saveCollection('interestForms');
+        App.renderPage('interest-forms');
         alert('Interest form submitted successfully!');
       });
     }
@@ -182,41 +196,67 @@ const App = {
   },
 
   setupCustomerPortalForm() {
-    const form = document.getElementById('customer-interest-form');
-    const cancelBtn = document.getElementById('cancel-customer-form');
+    // Use event delegation so the listener works even after the form is
+    // dynamically injected into the DOM by CustomerPortal.render().
+    document.addEventListener('submit', (e) => {
+      const form = e.target.closest('#customer-interest-form');
+      if (!form) return;
 
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
+      e.preventDefault();
+      const formData = new FormData(form);
 
-        const newForm = {
-          id: 'IF-' + (1000 + AppData.interestForms.length + 1),
-          customerName: 'Website Customer',
-          phone: formData.get('phone'),
-          zipCode: formData.get('zipCode'),
-          workType: formData.get('workType'),
-          description: `Customer requested ${formData.get('workType')} work via website interest form`,
-          status: 'new',
-          submittedAt: new Date().toISOString(),
-          assignedSalesPerson: AppData.salesTeam[0].id,
-          source: 'website',
-        };
+      const timeline = formData.get('timeline');
+      const priority = timeline === '1-2 weeks' ? 'high' : timeline === '2-3 months' || timeline === 'flexible' ? 'low' : 'medium';
 
-        AppData.interestForms.push(newForm);
-        form.reset();
+      const newForm = {
+        id: 'IF-' + (1000 + AppData.interestForms.length + 1),
+        customerName: formData.get('customerName'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        address: formData.get('address'),
+        propertyType: formData.get('propertyType'),
+        workType: formData.get('workType'),
+        description: formData.get('description'),
+        timeline: formData.get('timeline'),
+        budget: formData.get('budget'),
+        status: 'new',
+        priority: priority,
+        submittedAt: new Date().toISOString(),
+        assignedSalesPerson: AppData.salesTeam[0].id,
+        adminNotes: '',
+        source: 'website',
+      };
 
-        alert(`Thank you! Your interest form has been submitted.\n\nWork Type: ${formData.get('workType')}\nPhone: ${formData.get('phone')}\nZip Code: ${formData.get('zipCode')}\n\nOur sales team will call you back shortly.`);
+      AppData.interestForms.push(newForm);
+      AppData.save();
+      FirestoreSync.saveCollection('interestForms');
+      form.reset();
 
-        App.renderPage('interestForms');
-      });
-    }
+      alert(`Thank you, ${formData.get('customerName')}!
 
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        document.getElementById('customer-interest-form').reset();
-      });
-    }
+Your interest request has been submitted.
+
+Work Type: ${formData.get('workType')}
+Phone: ${formData.get('phone')}
+Address: ${formData.get('address')}
+
+Our sales team will call you back shortly.`);
+
+      // Re-render dashboard to reflect new request count
+      if (App.currentPage === 'dashboard') App.renderPage('dashboard');
+      if (App.currentPage === 'interest-forms') App.renderPage('interest-forms');
+
+      // Navigate to interest forms so the new submission is visible
+      App.navigateTo('interest-forms');
+    });
+
+    document.addEventListener('click', (e) => {
+      const cancelBtn = e.target.closest('#cancel-customer-form');
+      if (!cancelBtn) return;
+
+      const form = document.getElementById('customer-interest-form');
+      if (form) form.reset();
+    });
   },
 
   setupAddProjectForm() {
@@ -256,7 +296,7 @@ const App = {
         depositPaid: 0,
         remainingBalance: parseFloat(formData.get('jobValue')),
         paymentStatus: 'unpaid',
-        status: 'wip',
+        status: 'pending_payment',
         scheduledDate: formData.get('scheduledDate'),
         completionDate: null,
         salesPerson: formData.get('salesPerson'),
@@ -276,6 +316,8 @@ const App = {
       modal.classList.remove('open');
       overlay.classList.remove('open');
       form.reset();
+      AppData.save();
+      FirestoreSync.saveCollection('projects');
       Dashboard.render();
       alert('Project created successfully!');
     });
@@ -420,31 +462,145 @@ const App = {
     }
   },
 
+  setupAuth() {
+    const loginBtn = document.getElementById('btn-login');
+    const logoffBtn = document.getElementById('btn-logoff');
+    const roleSelect = document.getElementById('user-role-select');
+    const roleSelector = document.getElementById('role-selector');
+    const userName = document.getElementById('user-name');
+    const userAvatar = document.getElementById('user-avatar');
+
+    loginBtn.addEventListener('click', () => {
+      const role = roleSelect.value;
+      const staff = AppData.staff.find((s) => s.systemRole === role);
+      this.session.isSignedIn = true;
+      this.session.staffId = staff ? staff.id : null;
+      this.session.staffName = staff ? staff.name : role + ' User';
+      this.session.systemRole = role;
+
+      try {
+        localStorage.setItem('abc_session', JSON.stringify(this.session));
+      } catch (e) { /* storage unavailable */ }
+
+      this.updateAuthUI();
+      alert(`Signed in as ${this.session.staffName} (${role})`);
+    });
+
+    logoffBtn.addEventListener('click', () => {
+      this.session.isSignedIn = false;
+      this.session.staffId = null;
+      this.session.staffName = null;
+      this.session.systemRole = 'Staff';
+      try {
+        localStorage.removeItem('abc_session');
+      } catch (e) { /* storage unavailable */ }
+      this.updateAuthUI();
+      alert('Signed off successfully.');
+    });
+
+    // Login screen button handler
+    const loginScreenBtn = document.getElementById('btn-login-screen');
+    const loginRoleSelect = document.getElementById('login-role-select');
+    if (loginScreenBtn) {
+      loginScreenBtn.addEventListener('click', () => {
+        const role = loginRoleSelect.value;
+        if (!role) {
+          alert('Please select a role.');
+          return;
+        }
+        const staff = AppData.staff.find((s) => s.systemRole === role);
+        this.session.isSignedIn = true;
+        this.session.staffId = staff ? staff.id : null;
+        this.session.staffName = staff ? staff.name : role + ' User';
+        this.session.systemRole = role;
+
+        try {
+          localStorage.setItem('abc_session', JSON.stringify(this.session));
+        } catch (e) { /* storage unavailable */ }
+
+        this.updateAuthUI();
+        alert('Signed in as ' + this.session.staffName + ' (' + role + ')');
+      });
+    }
+
+    // Restore session from localStorage if present
+    try {
+      const saved = localStorage.getItem('abc_session');
+      if (saved) {
+        this.session = JSON.parse(saved);
+      }
+    } catch (e) { /* ignore */ }
+  },
+
+  updateAuthUI() {
+    const loginScreen = document.getElementById('login-screen');
+    const loginBtn = document.getElementById('btn-login');
+    const logoffBtn = document.getElementById('btn-logoff');
+    const roleSelector = document.getElementById('role-selector');
+    const userName = document.getElementById('user-name');
+    const userAvatar = document.getElementById('user-avatar');
+    const mainApp = document.querySelector('.sidebar, .main-content');
+
+    if (this.session.isSignedIn) {
+      if (loginScreen) loginScreen.style.display = 'none';
+      if (mainApp) mainApp.style.display = '';
+      loginBtn.style.display = 'none';
+      logoffBtn.style.display = 'inline-block';
+      roleSelector.style.display = 'block';
+      userName.textContent = this.session.staffName || 'User';
+      userAvatar.textContent = (this.session.staffName || 'U').charAt(0).toUpperCase();
+    } else {
+      if (loginScreen) loginScreen.style.display = 'flex';
+      if (mainApp) mainApp.style.display = 'none';
+      loginBtn.style.display = 'none';
+      logoffBtn.style.display = 'none';
+      roleSelector.style.display = 'none';
+      userName.textContent = 'Not Signed In';
+      userAvatar.textContent = 'A';
+    }
+  },
+
+  isAdmin() {
+    return this.session.isSignedIn && this.session.systemRole === 'Admin';
+  },
+
+  isManagerOrAdmin() {
+    return this.session.isSignedIn && (this.session.systemRole === 'Admin' || this.session.systemRole === 'Manager');
+  },
+
   setupThemeToggle() {
     const toggleBtn = document.getElementById('theme-toggle');
     const html = document.documentElement;
 
     // The inline script in index.html has already applied the theme class before
     // first paint; read it back so the two can never disagree.
-    const isNight = () => html.classList.contains('theme-night');
+    const isNight = () =>
+      html.classList.contains('theme-night') || html.getAttribute('data-theme') === 'dark';
 
     const applyTheme = (theme) => {
       html.classList.remove('theme-day', 'theme-night');
       html.classList.add('theme-' + theme);
+      // Keep the legacy attribute in sync so a stale cached stylesheet (or a
+      // stale cached script) still resolves the correct theme.
+      html.setAttribute('data-theme', theme === 'night' ? 'dark' : 'light');
       try {
         localStorage.setItem('konark_theme', theme);
+        localStorage.setItem('theme', theme === 'night' ? 'dark' : 'light');
       } catch (e) { /* storage unavailable — theme still applies for this session */ }
+
+      const icon = toggleBtn.querySelector('.theme-toggle-icon');
+      const label = toggleBtn.querySelector('.theme-toggle-label');
 
       if (theme === 'night') {
         toggleBtn.title = 'Switch to Day Mode (Light)';
         toggleBtn.setAttribute('aria-label', 'Switch to Day Mode');
-        toggleBtn.querySelector('.theme-toggle-icon').textContent = '☀️';
-        toggleBtn.querySelector('.theme-toggle-label').textContent = 'Day';
+        if (icon) icon.textContent = '☀️';
+        if (label) label.textContent = 'Day';
       } else {
         toggleBtn.title = 'Switch to Night Mode (Dark)';
         toggleBtn.setAttribute('aria-label', 'Switch to Night Mode');
-        toggleBtn.querySelector('.theme-toggle-icon').textContent = '🌙';
-        toggleBtn.querySelector('.theme-toggle-label').textContent = 'Night';
+        if (icon) icon.textContent = '🌙';
+        if (label) label.textContent = 'Night';
       }
     };
 

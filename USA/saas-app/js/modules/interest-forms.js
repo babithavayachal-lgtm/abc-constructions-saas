@@ -6,62 +6,134 @@
 const InterestForms = {
   render() {
     const forms = AppData.interestForms;
+    const newCount = forms.filter(f => f.status === 'new').length;
 
     return `
       <div class="page-header">
-        <h1 class="page-title">Interest Forms</h1>
-        <p class="page-subtitle">Customer interest submissions imported from the website interest form</p>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+          <div>
+            <h1 class="page-title">Interest Forms</h1>
+            <p class="page-subtitle">Customer interest submissions from the website portal</p>
+          </div>
+          ${newCount > 0 ? `
+            <div class="stat-card" style="display:inline-block; padding:0.75rem 1rem; min-width:140px;">
+              <div class="stat-label" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">New Requests</div>
+              <div class="stat-value" style="font-size:1.5rem; color:var(--text-warning);">${newCount}</div>
+            </div>
+          ` : ''}
+        </div>
       </div>
 
-      <!-- Imported Interest Forms Table -->
-      <div class="section">
-        <div class="section-header">
-          <h2 class="section-title">Submitted Interest Forms (from Website)</h2>
-          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-            These forms were submitted by customers through the website interest form portal.
-          </p>
+      <!-- Status Filter Chips -->
+      <div class="section" style="margin-bottom:1rem;">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h2 class="section-title" style="font-size:1rem;">Submitted Interest Forms</h2>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+          <button onclick="InterestForms.filterStatus('all')" class="btn btn-sm ${InterestForms._currentFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" style="padding:0.375rem 0.75rem;">All</button>
+          <button onclick="InterestForms.filterStatus('new')" class="btn btn-sm ${InterestForms._currentFilter === 'new' ? 'btn-warning' : 'btn-secondary'}" style="padding:0.375rem 0.75rem;">New</button>
+          <button onclick="InterestForms.filterStatus('contacted')" class="btn btn-sm ${InterestForms._currentFilter === 'contacted' ? 'btn-info' : 'btn-secondary'}" style="padding:0.375rem 0.75rem;">Contacted</button>
+          <button onclick="InterestForms.filterStatus('quoted')" class="btn btn-sm ${InterestForms._currentFilter === 'quoted' ? 'btn-info' : 'btn-secondary'}" style="padding:0.375rem 0.75rem;">Quoted</button>
+          <button onclick="InterestForms.filterStatus('converted')" class="btn btn-sm ${InterestForms._currentFilter === 'converted' ? 'btn-success' : 'btn-secondary'}" style="padding:0.375rem 0.75rem;">Converted</button>
         </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
                 <th>Form ID</th>
+                <th>Customer</th>
                 <th>Work Type</th>
-                <th>Phone Number</th>
-                <th>Zip Code</th>
+                <th>Property</th>
+                <th>Timeline</th>
+                <th>Budget</th>
+                <th>Priority</th>
                 <th>Status</th>
                 <th>Submitted</th>
                 <th>Assigned To</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              ${forms.map((f) => `\n                <tr>
-                  <td><strong>${f.id}</strong></td>
-                  <td>${f.workType}</td>
-                  <td>${f.phone}</td>
-                  <td>${f.zipCode}</td>
-                  <td><span class="badge badge-${f.status}">${f.status}</span></td>
-                  <td>${new Date(f.submittedAt).toLocaleDateString()}</td>
-                  <td>${AppData.getSalesPersonName(f.assignedSalesPerson)}</td>
-                  <td>
-                    <button class="btn btn-sm btn-primary" onclick="InterestForms.convertToProposal('${f.id}')">
-                      Create Proposal
-                    </button>
-                  </td>
-                </tr>
-              `).join('') || `
-                <tr>
-                  <td colspan="8" class="empty-state" style="padding: 1rem;">
-                    No interest forms submitted yet. Customers can submit forms through the website portal.
-                  </td>
-                </tr>
-              `}
+            <tbody id="interest-forms-tbody">
+              ${this.renderFormsTable(forms)}
             </tbody>
           </table>
         </div>
       </div>
     `;
+  },
+
+  _currentFilter: 'all',
+
+  filterStatus(status) {
+    this._currentFilter = status;
+    App.renderPage('interestForms');
+  },
+
+  renderFormsTable(forms) {
+    const filtered = this._currentFilter === 'all'
+      ? forms
+      : forms.filter(f => f.status === this._currentFilter);
+
+    if (filtered.length === 0) {
+      return `\n                <tr>
+                    <td colspan="11" class="empty-state" style="padding:1rem;">
+                      No ${this._currentFilter} interest forms found.
+                    </td>
+                  </tr>`;
+    }
+
+    return filtered.map((f) => {
+      const priorityColor = f.priority === 'high' ? 'var(--text-danger)' : f.priority === 'medium' ? 'var(--text-warning)' : 'var(--text-success)';
+      return `\n                <tr>
+                    <td><strong>${f.id}</strong></td>
+                    <td>
+                      <div>${f.customerName}</div>
+                      <div style="font-size:0.75rem; color:var(--text-muted);">${f.email || '—'}</div>
+                    </td>
+                    <td>${f.workType}</td>
+                    <td>${f.propertyType || '—'}</td>
+                    <td>${f.timeline || '—'}</td>
+                    <td>${f.budget || '—'}</td>
+                    <td><span style="color:${priorityColor}; font-weight:600; text-transform:uppercase; font-size:0.75rem;">${f.priority}</span></td>
+                    <td><span class="badge badge-${f.status}">${f.status}</span></td>
+                    <td>${new Date(f.submittedAt).toLocaleDateString()}</td>
+                    <td>${AppData.getSalesPersonName(f.assignedSalesPerson)}</td>
+                    <td>
+                      <div style="display:flex; gap:0.25rem; flex-direction:column;">
+                        <button class="btn btn-sm btn-primary" onclick="InterestForms.convertToProposal('${f.id}')" style="padding:0.375rem 0.6rem; font-size:0.75rem;">Create Proposal</button>
+                        ${f.status !== 'converted' ? `
+                          <button class="btn btn-sm btn-secondary" onclick="InterestForms.updateStatus('${f.id}', 'contacted')" style="padding:0.375rem 0.6rem; font-size:0.75rem;">Mark Contacted</button>
+                        ` : ''}
+                        <button class="btn btn-sm" onclick="InterestForms.addNotes('${f.id}')" style="padding:0.375rem 0.6rem; font-size:0.75rem; background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">Notes</button>
+                      </div>
+                    </td>
+                  </tr>
+              `;
+    }).join('');
+  },
+
+  updateStatus(formId, newStatus) {
+    const form = AppData.interestForms.find((f) => f.id === formId);
+    if (!form) return;
+    form.status = newStatus;
+    AppData.save();
+    FirestoreSync.saveCollection('interestForms');
+    App.renderPage('interestForms');
+    if (App.currentPage === 'dashboard') App.renderPage('dashboard');
+    alert(`Form ${formId} status updated to ${newStatus}.`);
+  },
+
+  addNotes(formId) {
+    const form = AppData.interestForms.find((f) => f.id === formId);
+    if (!form) return;
+    const notes = prompt(`Add admin notes for ${form.customerName} (${form.id}):\n\nCurrent notes: ${form.adminNotes || '—'}`, form.adminNotes || '');
+    if (notes !== null) {
+      form.adminNotes = notes;
+      AppData.save();
+      FirestoreSync.saveCollection('interestForms');
+      App.renderPage('interestForms');
+      alert('Notes saved.');
+    }
   },
 
   convertToProposal(formId) {
@@ -78,15 +150,19 @@ const InterestForms = {
     const newProject = {
       id: 'PJ-' + (1000 + AppData.projects.length + 1),
       customerName: form.customerName || 'Website Customer',
+      email: form.email || '',
       phone: form.phone,
-      zipCode: form.zipCode,
+      address: form.address,
       workType: form.workType,
       description: form.description || `Customer requested ${form.workType} work via website interest form`,
+      propertyType: form.propertyType,
+      timeline: form.timeline,
+      budget: form.budget,
       jobValue: jobValue,
       depositPaid: 0,
       remainingBalance: jobValue,
       paymentStatus: 'unpaid',
-      status: 'wip',
+      status: 'pending_payment',
       scheduledDate: null,
       completionDate: null,
       salesPerson: form.assignedSalesPerson,
@@ -107,6 +183,9 @@ const InterestForms = {
     };
 
     AppData.projects.push(newProject);
+
+    AppData.save();
+    FirestoreSync.saveCollection('projects');
 
     // Generate proposal link and notify
     this.notifyProposalCreated(newProject);

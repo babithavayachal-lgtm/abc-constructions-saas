@@ -75,6 +75,13 @@ const Dashboard = {
             <span>Jobs behind schedule</span>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">New Interest Forms</div>
+          <div class="stat-value">${AppData.getNewInterestFormsCount()}</div>
+          <div class="stat-change warning">
+            <span>Customer requests pending</span>
+          </div>
+        </div>
       </div>
 
       <!-- WIP Jobs Section -->

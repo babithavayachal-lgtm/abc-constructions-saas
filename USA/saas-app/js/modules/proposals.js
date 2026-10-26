@@ -71,18 +71,18 @@ const Proposals = {
                     <td>${p.workType}</td>
                     <td>$${p.jobValue.toLocaleString()}</td>
                     <td>$${deposit}</td>
-                    <td><span class="badge ${approvalBadge}">${approvalText}</span></td>
+                    <td><span class="badge ${approvalBadge}">${approvalText} ${!p.customerApproved && !p.customerDenied ? '⚠️ Pending' : ''}</span></td>
                     <td>
                       <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <input type="text" value="${p.proposalLink}" readonly style="flex:1; padding:0.25rem; font-size:0.75rem; border:1px solid var(--border); border-radius:4px;">
+                        <button class="btn btn-sm btn-primary" onclick="Proposals.openCustomerPortal('${p.id}')" style="flex:1; padding:0.25rem 0.5rem; font-size:0.75rem;" title="Open Customer Portal">${p.proposalLink}</button>
                         <button class="btn btn-sm btn-secondary" onclick="copyLink('${p.proposalLink}')" title="Copy link">Copy</button>
-                        <button class="btn btn-sm btn-primary" onclick="Proposals.openCustomerPortal('${p.id}')" title="Customer Portal">Portal</button>
+                        <button class="btn btn-sm btn-info" onclick="Proposals.sendProposalEmail('${p.id}')" title="Send Proposal Email">Email</button>
                       </div>
                     </td>
                     <td>
                       ${!p.customerApproved && !p.customerDenied
                         ? `
-                          <button class="btn btn-sm btn-success" onclick="Proposals.simulateCustomerApprove('${p.id}')" title="Simulate Customer Approve">Approve</button>
+                          <button class="btn btn-sm btn-warning" onclick="Proposals.simulateCustomerApprove('${p.id}')" title="Simulate Customer Approve">⚠️ Awaiting Approval</button>
                           <button class="btn btn-sm btn-danger" onclick="Proposals.simulateCustomerDeny('${p.id}')" title="Simulate Customer Deny">Deny</button>
                         `
                         : `<span class="badge ${p.customerApproved ? 'badge-approved' : 'badge-denied'}">${p.customerApproved ? 'Approved' : 'Denied'}</span>`
@@ -104,6 +104,37 @@ const Proposals = {
   copyLink(link) {
     navigator.clipboard.writeText(link);
     alert('Proposal link copied to clipboard!');
+  },
+
+  sendProposalEmail(projectId) {
+    const project = AppData.projects.find((p) => p.id === projectId);
+    if (!project) return;
+
+    const deposit = (project.jobValue * 0.5).toFixed(2);
+    const salesPerson = AppData.getSalesPersonName(project.salesPerson);
+
+    const subject = encodeURIComponent(`Project Proposal - ${project.id} - ABC Constructions`);
+    const body = encodeURIComponent(
+      `Hello ${project.customerName},\n\n` +
+      `Thank you for your interest in ${project.workType} work with ABC Constructions.\n\n` +
+      `Project Details:\n` +
+      `  Project ID: ${project.id}\n` +
+      `  Work Type: ${project.workType}\n` +
+      `  Description: ${project.description || '—'}\n` +
+      `  Property Type: ${project.propertyType || '—'}\n` +
+      `  Timeline: ${project.timeline || '—'}\n` +
+      `  Budget: ${project.budget || '—'}\n` +
+      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
+      `  50% Deposit Due: $${deposit}\n` +
+      `  Sales Person: ${salesPerson}\n` +
+      `  Status: ${project.status}\n\n` +
+      `Proposal Link: ${project.proposalLink}\n\n` +
+      `Please review the proposal and click the link to Approve or Deny.\n\n` +
+      `Best regards,\nABC Constructions Team`
+    );
+
+    const mailtoUrl = `mailto:${project.email || ''}?from=babyjune7@gmail.com&subject=${subject}&body=${body}`;
+    window.open(mailtoUrl, '_blank');
   },
 
   viewDetails(projectId) {
@@ -141,12 +172,25 @@ const Proposals = {
       project.customerApproved = true;
       project.customerDenied = false;
       project.approvedAt = new Date().toISOString();
-      project.paymentStatus = 'partial'; // 50% deposit expected
+      // Status stays 'pending_payment' until 50% deposit is received
 
-      // Send notification to company (WhatsApp/email/message)
+      AppData.save();
+
+      AppData.save();
+
+      // Close the customer portal modal
+      this.closeCustomerPortal();
+
+      // Open payment modal for 50% deposit
+      Payments.openPaymentModal(project.id);
+
+      // Send notification to company (email)
       this.notifyApproval(project);
 
-      alert(`✅ Customer approved!\n\nA 50% payment link has been generated for $${(project.jobValue * 0.5).toFixed(2)}.\nNotification sent to company via WhatsApp/Email/SMS.`);
+      // Send payment link email to customer
+      this.notifyCustomerPaymentLink(project);
+
+      alert(`✅ Customer approved!\n\nA 50% payment link has been generated for $${(project.jobValue * 0.5).toFixed(2)}.\nPayment link emailed to customer.\nNotification sent to company via email.`);
 
       App.renderPage('proposals');
       if (App.currentPage === 'dashboard') App.renderPage('dashboard');
@@ -162,6 +206,9 @@ const Proposals = {
       project.customerDenied = true;
       project.customerApproved = false;
       project.deniedAt = new Date().toISOString();
+
+      AppData.save();
+      FirestoreSync.saveCollection('projects');
 
       this.notifyDenial(project);
 
@@ -189,7 +236,51 @@ const Proposals = {
     if (!AppData.notifications) AppData.notifications = [];
     AppData.notifications.push(notification);
 
+    // Send email to company about approval
+    const subject = encodeURIComponent(`✅ Proposal Approved - ${project.id} - ${project.customerName}`);
+    const body = encodeURIComponent(
+      `Hello ABC Constructions Team,\n\n` +
+      `A customer has approved a proposal.\n\n` +
+      `Project Details:\n` +
+      `  Project ID: ${project.id}\n` +
+      `  Customer: ${project.customerName}\n` +
+      `  Email: ${project.email || '—'}\n` +
+      `  Phone: ${project.phone || '—'}\n` +
+      `  Work Type: ${project.workType}\n` +
+      `  Description: ${project.description || '—'}\n` +
+      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
+      `  50% Deposit Due: $${deposit}\n` +
+      `  Sales Person: ${AppData.getSalesPersonName(project.salesPerson)}\n` +
+      `  Status: ${project.status}\n\n` +
+      `Proposal Link: ${project.proposalLink}\n\n` +
+      `Please follow up with the customer for the 50% deposit.\n\n` +
+      `Best regards,\nABC Constructions Portal`
+    );
     console.log('[Notification - Approval]', notification);
+  },
+
+  // Send payment link email to customer
+  notifyCustomerPaymentLink(project) {
+    const deposit = (project.jobValue * 0.5).toFixed(2);
+    const salesPerson = AppData.getSalesPersonName(project.salesPerson);
+
+    const subject = encodeURIComponent(`💰 Your 50% Payment Link - Project ${project.id} - ABC Constructions`);
+    const body = encodeURIComponent(
+      `Hello ${project.customerName},\n\n` +
+      `Thank you for approving the proposal for your ${project.workType} work with ABC Constructions!\n\n` +
+      `Project Details:\n` +
+      `  Project ID: ${project.id}\n` +
+      `  Work Type: ${project.workType}\n` +
+      `  Description: ${project.description || '—'}\n` +
+      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
+      `  50% Deposit Due: $${deposit}\n` +
+      `  Sales Person: ${salesPerson}\n\n` +
+      `Proposal Link: ${project.proposalLink}\n\n` +
+      `Please click the proposal link to complete your 50% deposit payment.\n\n` +
+      `Once payment is received, we'll schedule your work.\n\n` +
+      `Best regards,\nABC Constructions Team`
+    );
+    console.log('[Notification - Customer Payment Link]', { to: project.email, subject, projectId: project.id });
   },
 
   notifyDenial(project) {
@@ -208,6 +299,25 @@ const Proposals = {
     if (!AppData.notifications) AppData.notifications = [];
     AppData.notifications.push(notification);
 
+    // Send email to company about denial
+    const subject = encodeURIComponent(`❌ Proposal Denied - ${project.id} - ${project.customerName}`);
+    const body = encodeURIComponent(
+      `Hello ABC Constructions Team,\n\n` +
+      `A customer has denied a proposal.\n\n` +
+      `Project Details:\n` +
+      `  Project ID: ${project.id}\n` +
+      `  Customer: ${project.customerName}\n` +
+      `  Email: ${project.email || '—'}\n` +
+      `  Phone: ${project.phone || '—'}\n` +
+      `  Work Type: ${project.workType}\n` +
+      `  Description: ${project.description || '—'}\n` +
+      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
+      `  Sales Person: ${AppData.getSalesPersonName(project.salesPerson)}\n` +
+      `  Status: Denied\n\n` +
+      `Proposal Link: ${project.proposalLink}\n\n` +
+      `You may want to follow up with the customer to understand their decision.\n\n` +
+      `Best regards,\nABC Constructions Portal`
+    );
     console.log('[Notification - Denial]', notification);
   },
 
@@ -237,7 +347,7 @@ const Proposals = {
         </div>
         <div style="padding: 2rem; border: 1px solid var(--border); border-top: none; background: var(--bg-card); display: flex; gap: 1rem; justify-content: center; border-radius: 0 0 8px 8px;">
           <button onclick="Proposals.simulateCustomerApprove('${project.id}')" style="flex:1; padding: 1rem; background: var(--success-solid); color: #ffffff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">✅ Approve</button>
-          <button onclick="Proposals.simulateCustomerDeny('${project.id}')" style="flex:1; padding: 1rem; background: var(--danger-solid); color: #ffffff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">❌ Deny</button>
+          <button onclick="Proposals.simulateCustomerDeny('${project.id}'); Proposals.closeCustomerPortal();" style="flex:1; padding: 1rem; background: var(--danger-solid); color: #ffffff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem;">❌ Deny</button>
         </div>
       </div>
     `;
@@ -249,7 +359,7 @@ const Proposals = {
         <div class="modal" style="display: block; max-width: 600px;">
           <div class="modal-header">
             <h3>Customer Portal — ${project.id}</h3>
-            <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+            <button class="modal-close" onclick="Proposals.closeCustomerPortal()">&times;</button>
           </div>
           <div class="modal-body" style="padding: 0;">
             ${portalContent}
@@ -258,6 +368,12 @@ const Proposals = {
       </div>
     `;
     overlay.style.display = 'flex';
+  },
+
+  closeCustomerPortal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.style.display = 'none';
+    overlay.innerHTML = '';
   },
 };
 

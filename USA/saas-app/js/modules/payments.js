@@ -293,6 +293,14 @@ const Payments = {
       project.depositPaid = parseFloat(deposit);
       project.remainingBalance = project.jobValue - project.depositPaid;
       project.paymentStatus = 'partial';
+      // Only start work (WIP) once 50% deposit is received
+      if (project.customerApproved) {
+        project.status = 'wip';
+      }
+
+      AppData.save();
+
+      FirestoreSync.saveCollection('projects');
 
       // Send payment notification
       this.notifyPaymentReceived(project, deposit, '50% Deposit');
@@ -301,8 +309,12 @@ const Payments = {
       project.remainingBalance = 0;
       project.paymentStatus = 'paid';
 
+      AppData.save();
+
+      FirestoreSync.saveCollection('projects');
+
       // Send payment notification
-      this.notifyPaymentReceived(project, project.remainingBalance, 'Final Payment');
+      this.notifyPaymentReceived(project, project.jobValue, 'Final Payment');
     }
 
     document.querySelector('.modal-overlay').style.display = 'none';
@@ -329,6 +341,25 @@ const Payments = {
     if (!AppData.notifications) AppData.notifications = [];
     AppData.notifications.push(notification);
 
+    // Send email to company about payment received
+    const subject = encodeURIComponent(`💰 Payment Received - ${project.id} - ${project.customerName}`);
+    const body = encodeURIComponent(
+      `Hello ABC Constructions Team,\n\n` +
+      `A payment has been received from a customer.\n\n` +
+      `Payment Details:\n` +
+      `  Project ID: ${project.id}\n` +
+      `  Customer: ${project.customerName}\n` +
+      `  Email: ${project.email || '—'}\n` +
+      `  Phone: ${project.phone || '—'}\n` +
+      `  Work Type: ${project.workType}\n` +
+      `  Payment Type: ${type}\n` +
+      `  Amount Received: $${amount.toLocaleString()}\n` +
+      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
+      `  Remaining Balance: $${project.remainingBalance.toLocaleString()}\n` +
+      `  Payment Status: ${project.paymentStatus}\n\n` +
+      `The funds have been received in the company account.\n\n` +
+      `Best regards,\nABC Constructions Portal`
+    );
     console.log('[Notification - Payment]', notification);
   },
 };

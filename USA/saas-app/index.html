@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <script>
     // Apply the saved theme before first paint to avoid a flash of the wrong color scheme.
     (function () {
@@ -16,18 +16,56 @@
       try {
         var saved = localStorage.getItem('konark_theme');
         if (saved !== 'day' && saved !== 'night') {
-          saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-            ? 'night'
-            : 'day';
+          // Fall back to the legacy key, then to the OS preference.
+          var legacy = localStorage.getItem('theme');
+          saved = legacy === 'dark' || legacy === 'light'
+            ? (legacy === 'dark' ? 'night' : 'day')
+            : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'night' : 'day');
         }
         root.classList.add('theme-' + saved);
+        root.setAttribute('data-theme', saved === 'night' ? 'dark' : 'light');
       } catch (e) {
         root.classList.add('theme-day');
+        root.setAttribute('data-theme', 'light');
       }
     })();
   </script>
 </head>
 <body>
+
+  <!-- Full-Screen Login Overlay -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-mark">ABC</div>
+        <div>
+          <h2>ABC Constructions</h2>
+          <p class="tagline">Enterprise Solution</p>
+        </div>
+      </div>
+      <div class="login-form">
+        <h3>Sign In</h3>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.875rem;">
+          Select your role to access the portal
+        </p>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="login-role-select" required>
+            <option value="">Select role</option>
+            <option value="Admin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Staff">Staff</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-login-screen">Sign In</button>
+      </div>
+      <div class="login-footer">
+        <p style="font-size:0.75rem; color:var(--text-muted);">
+          ABC Constructions &copy; 2026
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- Sidebar Navigation -->
   <aside class="sidebar" id="sidebar">
@@ -90,6 +128,9 @@
       <a href="#" class="nav-link" data-page="notifications">
         <span class="icon">𔔧</span> Notifications
       </a>
+      <a href="#" class="nav-link" data-page="staff">
+        <span class="icon">👥</span> Staff
+      </a>
     </nav>
   </aside>
 
@@ -103,12 +144,23 @@
       </div>
       <div class="top-bar-right">
         <div class="user-profile">
-          <span class="user-avatar">A</span>
-          <span class="user-name">Admin User</span>
+          <span class="user-avatar" id="user-avatar">A</span>
+          <span class="user-name" id="user-name">Not Signed In</span>
         </div>
+        <!-- Role Selector (shown when signed in) -->
+        <div id="role-selector" style="display:none; margin-right:1rem;">
+          <label style="font-size:0.75rem; color:var(--text-secondary); margin-right:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">Role</label>
+          <select id="user-role-select" style="font-size:0.8125rem; padding:0.375rem 0.75rem; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+            <option value="Staff">Staff</option>
+            <option value="Manager">Manager</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-login" style="margin-right:0.75rem;">Sign In</button>
+        <button class="btn btn-secondary" id="btn-logoff" style="display:none;">Sign Off</button>
         <button class="btn btn-theme-toggle" id="theme-toggle" type="button"
                 title="Switch to Day Mode (Light)" aria-label="Switch to Day Mode">
-          <span class="theme-toggle-icon">☀️</span>
+          <span class="theme-toggle-icon" aria-hidden="true">☀️</span>
           <span class="theme-toggle-label">Day</span>
         </button>
         <button class="btn btn-primary" id="btn-add-project">
@@ -166,26 +218,81 @@
     </div>
   </div>
 
-  <script src="js/modules/app.js"></script>
-  <script src="js/modules/router.js"></script>
-  <script src="js/modules/data.js"></script>
-  <script src="js/modules/dashboard.js"></script>
-  <script src="js/modules/interest-forms.js"></script>
-  <script src="js/modules/customer-portal.js"></script>
-  <script src="js/modules/proposals.js"></script>
-  <script src="js/modules/jobs.js"></script>
-  <script src="js/modules/completed.js"></script>
-  <script src="js/modules/payments.js"></script>
-  <script src="js/modules/permits.js"></script>
-  <script src="js/modules/scheduling.js"></script>
-  <script src="js/modules/change-orders.js"></script>
-  <script src="js/modules/crew-dispatch.js"></script>
-  <script src="js/modules/work-closure.js"></script>
-  <script src="js/modules/maintenance-guide.js"></script>
-  <script src="js/modules/inventory.js"></script>
-  <script src="js/modules/sales.js"></script>
-  <script src="js/modules/settings.js"></script>
-  <script src="js/modules/notifications.js"></script>
-  <script src="js/main.js"></script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, doc, setDoc, deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPJ6LGWz7cAXmyePyxE28R-YBUIMSKcNo",
+      authDomain: "babithavayachal.firebaseapp.com",
+      projectId: "babithavayachal",
+      storageBucket: "babithavayachal.firebasestorage.app",
+      messagingSenderId: "353188169839",
+      appId: "1:353188169839:web:dbf2c6a3c05b355979e59a"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    window.firebaseDb = db;
+    window.firebaseCollections = {
+      interestForms: collection(db, 'interestForms'),
+      projects: collection(db, 'projects'),
+      staff: collection(db, 'staff'),
+      permits: collection(db, 'permits'),
+      notifications: collection(db, 'notifications'),
+    };
+
+    window.firestoreHelpers = {
+      async add(collectionName, data) {
+        const col = window.firebaseCollections[collectionName];
+        const docRef = await addDoc(col, { ...data, createdAt: serverTimestamp() });
+        return docRef.id;
+      },
+      async set(collectionName, id, data) {
+        const docRef = doc(window.firebaseCollections[collectionName], id);
+        await setDoc(docRef, data, { merge: true });
+      },
+      async getAll(collectionName) {
+        const col = window.firebaseCollections[collectionName];
+        const snapshot = await getDocs(col);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      },
+      async delete(collectionName, id) {
+        await deleteDoc(doc(window.firebaseCollections[collectionName], id));
+      },
+      onSnapshot(collectionName, callback) {
+        const col = window.firebaseCollections[collectionName];
+        return onSnapshot(col, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          callback(data);
+        });
+      }
+    };
+  </script>
+  <script src="js/modules/app.js?v=8"></script>
+  <script src="js/modules/router.js?v=8"></script>
+  <script src="js/modules/data.js?v=8"></script>
+  <script src="js/modules/firestore.js?v=8"></script>
+  <script src="js/modules/dashboard.js?v=8"></script>
+  <script src="js/modules/interest-forms.js?v=8"></script>
+  <script src="js/modules/customer-portal.js?v=8"></script>
+  <script src="js/modules/proposals.js?v=8"></script>
+  <script src="js/modules/jobs.js?v=8"></script>
+  <script src="js/modules/completed.js?v=8"></script>
+  <script src="js/modules/payments.js?v=8"></script>
+  <script src="js/modules/permits.js?v=8"></script>
+  <script src="js/modules/scheduling.js?v=8"></script>
+  <script src="js/modules/change-orders.js?v=8"></script>
+  <script src="js/modules/crew-dispatch.js?v=8"></script>
+  <script src="js/modules/work-closure.js?v=8"></script>
+  <script src="js/modules/maintenance-guide.js?v=8"></script>
+  <script src="js/modules/inventory.js?v=8"></script>
+  <script src="js/modules/sales.js?v=8"></script>
+  <script src="js/modules/settings.js?v=8"></script>
+  <script src="js/modules/notifications.js?v=8"></script>
+  <script src="js/modules/staff.js?v=8"></script>
+  <script src="js/main.js?v=8"></script>
 </body>
 </html>
