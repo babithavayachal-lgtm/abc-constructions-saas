@@ -21,7 +21,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-icon" onclick="window.print()">🖨️ Print / PDF</button>
+        <button class="btn-icon" onclick="downloadProposalPDF()">📥 Download PDF</button>
+        <button class="btn-icon" onclick="window.print()">🖨️ Print</button>
         <a href="mailto:babyjune7@gmail.com" class="btn-icon">✉️ babyjune7@gmail.com</a>
         <a href="tel:5552349876" class="btn-icon">📞 (555) 234-9876</a>
       </div>
@@ -102,7 +103,8 @@
     </div>
   </div>
 
-  <!-- Firebase & App Script -->
-  <script type="module" src="js/proposal-app.js?v=1"></script>
+  <!-- HTML2PDF Library & Firebase App Script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script type="module" src="js/proposal-app.js?v=2"></script>
 </body>
 </html>

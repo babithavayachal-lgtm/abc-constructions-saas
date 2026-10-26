@@ -532,4 +532,32 @@ window.submitDecline = async function() {
   renderProposal();
 };
 
-document.addEventListener('DOMContentLoaded', init);
+window.downloadProposalPDF = function() {
+  const element = document.getElementById('proposal-content');
+  if (!element) return;
+  const pId = currentProject ? currentProject.id : 'PJ-1006';
+
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: `ABC_Constructions_Proposal_${pId}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  if (window.html2pdf) {
+    window.html2pdf().set(opt).from(element).save();
+  } else {
+    window.print();
+  }
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await init();
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('download') === 'pdf') {
+    setTimeout(() => {
+      window.downloadProposalPDF();
+    }, 800);
+  }
+});

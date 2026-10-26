@@ -73,9 +73,10 @@ const Proposals = {
                     <td>$${deposit}</td>
                     <td><span class="badge ${approvalBadge}">${approvalText} ${!p.customerApproved && !p.customerDenied ? '⚠️ Pending' : ''}</span></td>
                     <td>
+                      <div style="display:flex; gap:0.25rem;">
                         <a href="proposal.html?id=${p.id}" target="_blank" class="btn btn-sm btn-primary" style="flex:1; padding:0.25rem 0.5rem; font-size:0.75rem; text-decoration:none; text-align:center;" title="Open Live Customer Proposal Page">🔗 Open Proposal</a>
-                        <button class="btn btn-sm btn-secondary" onclick="copyLink(window.location.origin + '/proposal.html?id=${p.id}')" title="Copy proposal link">Copy</button>
                         <button class="btn btn-sm btn-info" onclick="Proposals.sendProposalEmail('${p.id}')" title="Send Proposal Email">Email</button>
+                      </div>
                     </td>
                     <td>
                       ${!p.customerApproved && !p.customerDenied
@@ -281,7 +282,7 @@ const Proposals = {
     const salesPerson = AppData.getSalesPersonName(project.salesPerson);
     const paymentLink = window.location.origin + '/proposal.html?id=' + project.id;
 
-    const subject = `Proposal Approved: 50% Deposit Payment Link - ABC Constructions (${project.id})`;
+    const subject = `Proposal Approved: 50% Deposit Payment Link & Official Proposal PDF - ABC Constructions (${project.id})`;
     const plainBody =
       `Dear ${project.customerName},\n\n` +
       `Thank you for approving the proposal for your ${project.workType} work with The ABC Constructions Company.\n\n` +
@@ -294,6 +295,9 @@ const Proposals = {
       `SECURE 50% PAYMENT LINK:\n` +
       `Please click the link below to review your approved proposal and submit your 50% deposit securely via Stripe:\n` +
       `${paymentLink}\n\n` +
+      `OFFICIAL PROPOSAL PDF DOCUMENT:\n` +
+      `Your signed proposal has been generated as an official PDF. You can view and download it directly at:\n` +
+      `${paymentLink}&download=pdf\n\n` +
       `WHAT HAPPENS NEXT:\n` +
       `1. Municipal Permitting: Once the 50% deposit is confirmed, state/county permit filing begins.\n` +
       `2. Utility Locates: Jolley Co. coordinates with 811 to mark underground lines on your property.\n` +
