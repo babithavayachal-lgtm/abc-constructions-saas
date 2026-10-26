@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposal & Payment — The ABC Constructions USA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/proposal.css?v=1">
+</head>
+<body>
+  <div class="proposal-wrapper" id="portal-app">
+    <!-- Header -->
+    <header class="portal-header">
+      <div class="brand-section">
+        <div class="brand-badge">ABC</div>
+        <div class="brand-info">
+          <h1>ABC Constructions USA</h1>
+          <p>Licensed, Insured & Bonded | Enterprise Exterior Solutions</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" onclick="window.print()">🖨️ Print / PDF</button>
+        <a href="tel:5552349876" class="btn-icon">📞 (555) 234-9876</a>
+      </div>
+    </header>
+
+    <!-- Content rendered by JS -->
+    <div id="proposal-content">
+      <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">
+        Loading proposal details...
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals: Payment & Decline -->
+  <div class="portal-modal-overlay" id="payment-modal">
+    <div class="portal-modal-card">
+      <div class="portal-modal-header">
+        <h3>Secure 50% Deposit Payment</h3>
+        <button class="portal-modal-close" onclick="closeModal('payment-modal')">&times;</button>
+      </div>
+      <div class="portal-modal-body">
+        <div class="payment-amount-display">
+          <div class="amount-label">50% Deposit Amount Due Today</div>
+          <div class="amount-val" id="pay-modal-amount">$0.00</div>
+          <p style="font-size:0.8125rem; color:var(--text-muted); margin-top:0.25rem;">Remaining 50% balance due upon county inspection & completion</p>
+        </div>
+        <form id="stripe-checkout-form" onsubmit="handleDepositPayment(event)">
+          <div class="form-group">
+            <label>Cardholder Name</label>
+            <input type="text" id="card-name" placeholder="John Doe" required>
+          </div>
+          <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" id="card-number" placeholder="4242 •••• •••• 4242" maxlength="19" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Expires</label>
+              <input type="text" id="card-exp" placeholder="MM/YY" maxlength="5" required>
+            </div>
+            <div class="form-group">
+              <label>CVC</label>
+              <input type="text" id="card-cvc" placeholder="123" maxlength="4" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Billing ZIP</label>
+            <input type="text" id="card-zip" placeholder="90210" maxlength="5" required>
+          </div>
+          <button type="button" class="btn-icon" style="width:100%; justify-content:center; margin-bottom:1rem;" onclick="fillTestCard()">
+            ⚡ Autofill Demo Test Card
+          </button>
+          <button type="submit" class="btn-approve" style="width:100%; justify-content:center;" id="btn-submit-payment">
+            🔒 Pay Deposit Now
+          </button>
+          <div class="stripe-badge-bar">
+            <span>🛡️ 256-Bit SSL Encrypted</span>
+            <span>💳 Powered by Stripe Sandbox</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="portal-modal-overlay" id="decline-modal">
+    <div class="portal-modal-card">
+      <div class="portal-modal-header">
+        <h3>Request Changes / Decline</h3>
+        <button class="portal-modal-close" onclick="closeModal('decline-modal')">&times;</button>
+      </div>
+      <div class="portal-modal-body">
+        <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem;">
+          Please let your ABC Constructions sales representative know what adjustments or questions you have:
+        </p>
+        <textarea id="decline-notes" rows="4" placeholder="e.g., We'd like to adjust the drainage path or ask about scheduling dates..." style="width:100%; margin-bottom:1rem;"></textarea>
+        <button class="btn-deny" style="width:100%;" onclick="submitDecline()">Submit Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & App Script -->
+  <script type="module" src="js/proposal-app.js?v=1"></script>
+</body>
+</html>

@@ -73,11 +73,9 @@ const Proposals = {
                     <td>$${deposit}</td>
                     <td><span class="badge ${approvalBadge}">${approvalText} ${!p.customerApproved && !p.customerDenied ? '⚠️ Pending' : ''}</span></td>
                     <td>
-                      <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <button class="btn btn-sm btn-primary" onclick="Proposals.openCustomerPortal('${p.id}')" style="flex:1; padding:0.25rem 0.5rem; font-size:0.75rem;" title="Open Customer Portal">${p.proposalLink}</button>
-                        <button class="btn btn-sm btn-secondary" onclick="copyLink('${p.proposalLink}')" title="Copy link">Copy</button>
+                        <a href="proposal.html?id=${p.id}" target="_blank" class="btn btn-sm btn-primary" style="flex:1; padding:0.25rem 0.5rem; font-size:0.75rem; text-decoration:none; text-align:center;" title="Open Live Customer Proposal Page">🔗 Open Proposal</a>
+                        <button class="btn btn-sm btn-secondary" onclick="copyLink(window.location.origin + '/proposal.html?id=${p.id}')" title="Copy proposal link">Copy</button>
                         <button class="btn btn-sm btn-info" onclick="Proposals.sendProposalEmail('${p.id}')" title="Send Proposal Email">Email</button>
-                      </div>
                     </td>
                     <td>
                       ${!p.customerApproved && !p.customerDenied

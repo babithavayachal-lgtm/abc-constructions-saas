@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/proposal**",
+        "destination": "/proposal.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
