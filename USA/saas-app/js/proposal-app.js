@@ -216,7 +216,7 @@ function renderProposal() {
           <h2 class="card-title">✍️ Authorization & Digital Signature</h2>
         </div>
         <div class="legal-box">
-          By signing below, you authorize ABC Constructions to initiate state permit filings, contact utility locators (811), and schedule crew dispatch upon receipt of the 50% deposit ($${deposit}).
+          By signing below, you authorize ABC Constructions to initiate state permit filings, contact utility locators (811), and schedule crew dispatch upon receipt of the exact 50% deposit ($${deposit}). Official approval confirmation and payment receipts will be dispatched from <strong>babyjune7@gmail.com</strong>.
         </div>
         <div class="signature-section">
           <div class="sig-tabs">

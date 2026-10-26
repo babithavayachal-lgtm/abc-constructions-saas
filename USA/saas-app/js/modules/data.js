@@ -229,6 +229,7 @@ const AppData = {
   // Settings
   settings: {
     companyName: 'The ABC Constructions Company',
+    companyEmail: 'babyjune7@gmail.com',
     location: 'USA',
     rateCardVersion: '2026-v1',
     paymentProvider: 'Stripe',

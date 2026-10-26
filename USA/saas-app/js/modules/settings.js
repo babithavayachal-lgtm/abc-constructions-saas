@@ -27,6 +27,10 @@ const Settings = {
                 <td>${settings.companyName}</td>
               </tr>
               <tr>
+                <td><strong>Company "From" Email</strong></td>
+                <td><a href="mailto:${settings.companyEmail || 'babyjune7@gmail.com'}" style="color:var(--primary); font-weight:600;">${settings.companyEmail || 'babyjune7@gmail.com'}</a></td>
+              </tr>
+              <tr>
                 <td><strong>Location</strong></td>
                 <td>${settings.location}</td>
               </tr>

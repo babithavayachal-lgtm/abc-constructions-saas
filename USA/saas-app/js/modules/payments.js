@@ -88,10 +88,15 @@ const Payments = {
                       </div>
                     </td>
                     <td>
-                      ${showPayButton
-                        ? `<button class="btn btn-sm btn-success" onclick="Payments.openPaymentModal('${p.id}')">Collect Payment</button>`
-                        : `<span class="badge badge-${p.paymentStatus === 'paid' ? 'approved' : 'denied'}">${p.paymentStatus === 'paid' ? 'Paid' : 'N/A'}</span>`
-                      }
+                      <div style="display:flex; gap:0.25rem; flex-direction:column;">
+                        ${showPayButton
+                          ? `<button class="btn btn-sm btn-success" onclick="Payments.openPaymentModal('${p.id}')">Collect Payment</button>`
+                          : `<span class="badge badge-${p.paymentStatus === 'paid' ? 'approved' : 'denied'}">${p.paymentStatus === 'paid' ? 'Paid' : 'N/A'}</span>`
+                        }
+                        ${p.customerApproved && p.paymentStatus !== 'paid' ? `
+                          <button class="btn btn-sm btn-info" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="Proposals.sendPaymentLinkEmail('${p.id}')" title="Email 50% Payment Link from babyjune7@gmail.com">📧 Email 50% Link</button>
+                        ` : ''}
+                      </div>
                     </td>
                   </tr>
                 `;

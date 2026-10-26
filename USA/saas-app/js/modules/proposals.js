@@ -80,10 +80,19 @@ const Proposals = {
                     <td>
                       ${!p.customerApproved && !p.customerDenied
                         ? `
-                          <button class="btn btn-sm btn-warning" onclick="Proposals.simulateCustomerApprove('${p.id}')" title="Simulate Customer Approve">⚠️ Awaiting Approval</button>
-                          <button class="btn btn-sm btn-danger" onclick="Proposals.simulateCustomerDeny('${p.id}')" title="Simulate Customer Deny">Deny</button>
+                          <div style="display:flex; gap:0.25rem; flex-direction:column;">
+                            <button class="btn btn-sm btn-warning" onclick="Proposals.simulateCustomerApprove('${p.id}')" title="Approve & Send 50% Payment Link via babyjune7@gmail.com">⚠️ Approve & Send Link</button>
+                            <button class="btn btn-sm btn-danger" onclick="Proposals.simulateCustomerDeny('${p.id}')" title="Simulate Customer Deny">Deny</button>
+                          </div>
                         `
-                        : `<span class="badge ${p.customerApproved ? 'badge-approved' : 'badge-denied'}">${p.customerApproved ? 'Approved' : 'Denied'}</span>`
+                        : `
+                          <div style="display:flex; gap:0.25rem; flex-direction:column; align-items:flex-start;">
+                            <span class="badge ${p.customerApproved ? 'badge-approved' : 'badge-denied'}">${p.customerApproved ? 'Approved' : 'Denied'}</span>
+                            ${p.customerApproved && p.paymentStatus !== 'paid' ? `
+                              <button class="btn btn-sm btn-success" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="Proposals.sendPaymentLinkEmail('${p.id}')" title="Send 50% Payment Link from babyjune7@gmail.com">📧 Send 50% Link</button>
+                            ` : ''}
+                          </div>
+                        `
                       }
                     </td>
                     <td>
@@ -257,28 +266,129 @@ const Proposals = {
     console.log('[Notification - Approval]', notification);
   },
 
-  // Send payment link email to customer
-  notifyCustomerPaymentLink(project) {
-    const deposit = (project.jobValue * 0.5).toFixed(2);
-    const salesPerson = AppData.getSalesPersonName(project.salesPerson);
+  // Send payment link email to customer via babyjune7@gmail.com
+  sendPaymentLinkEmail(projectId) {
+    const project = typeof projectId === 'object' ? projectId : AppData.projects.find((p) => p.id === projectId);
+    if (!project) return;
+    this.notifyCustomerPaymentLink(project);
+  },
 
-    const subject = encodeURIComponent(`💰 Your 50% Payment Link - Project ${project.id} - ABC Constructions`);
-    const body = encodeURIComponent(
-      `Hello ${project.customerName},\n\n` +
-      `Thank you for approving the proposal for your ${project.workType} work with ABC Constructions!\n\n` +
-      `Project Details:\n` +
-      `  Project ID: ${project.id}\n` +
-      `  Work Type: ${project.workType}\n` +
-      `  Description: ${project.description || '—'}\n` +
-      `  Job Value: $${project.jobValue.toLocaleString()}\n` +
-      `  50% Deposit Due: $${deposit}\n` +
-      `  Sales Person: ${salesPerson}\n\n` +
-      `Proposal Link: ${project.proposalLink}\n\n` +
-      `Please click the proposal link to complete your 50% deposit payment.\n\n` +
-      `Once payment is received, we'll schedule your work.\n\n` +
-      `Best regards,\nABC Constructions Team`
-    );
-    console.log('[Notification - Customer Payment Link]', { to: project.email, subject, projectId: project.id });
+  notifyCustomerPaymentLink(project) {
+    const fromEmail = 'babyjune7@gmail.com';
+    const fullAmount = Number(project.jobValue).toFixed(2);
+    const deposit = (project.jobValue * 0.5).toFixed(2);
+    const remaining = (project.jobValue * 0.5).toFixed(2);
+    const salesPerson = AppData.getSalesPersonName(project.salesPerson);
+    const paymentLink = window.location.origin + '/proposal.html?id=' + project.id;
+
+    const subject = `Proposal Approved: 50% Deposit Payment Link - ABC Constructions (${project.id})`;
+    const plainBody =
+      `Dear ${project.customerName},\n\n` +
+      `Thank you for approving the proposal for your ${project.workType} work with The ABC Constructions Company.\n\n` +
+      `As discussed, a 50% deposit is required to file state/county permits, schedule 811 utility markings with Jolley Co., and reserve your crew installation dates.\n\n` +
+      `FINANCIAL SUMMARY:\n` +
+      `  • Full Job Amount: $${Number(fullAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • 50% Deposit Due Now: $${Number(deposit).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • Remaining Balance (Due upon final county pass & closure): $${Number(remaining).toLocaleString(undefined, {minimumFractionDigits: 2})}\n` +
+      `  • Assigned Sales Rep: ${salesPerson}\n\n` +
+      `SECURE 50% PAYMENT LINK:\n` +
+      `Please click the link below to review your approved proposal and submit your 50% deposit securely via Stripe:\n` +
+      `${paymentLink}\n\n` +
+      `WHAT HAPPENS NEXT:\n` +
+      `1. Municipal Permitting: Once the 50% deposit is confirmed, state/county permit filing begins.\n` +
+      `2. Utility Locates: Jolley Co. coordinates with 811 to mark underground lines on your property.\n` +
+      `3. 7-Day Advance Notice: We will dispatch your tentative work schedule.\n` +
+      `4. Installation & Inspection: Crew arrives with materials; work is kept open for County staff inspection before backfill closure.\n\n` +
+      `If you have any questions, reply directly to this email at ${fromEmail}.\n\n` +
+      `Best regards,\nThe ABC Constructions Company USA\n` +
+      `From: ${fromEmail}\n` +
+      `Portal: https://babithavayachal.web.app`;
+
+    // Open user's default email client pre-filled with from: babyjune7@gmail.com
+    const mailtoUrl = `mailto:${project.email || ''}?from=${encodeURIComponent(fromEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainBody)}`;
+    try {
+      window.open(mailtoUrl, '_blank');
+    } catch (e) {
+      console.warn('Mailto popup blocked', e);
+    }
+
+    // Record notification in AppData
+    const notification = {
+      id: 'NOT-' + Date.now(),
+      projectId: project.id,
+      customerName: project.customerName,
+      type: 'payment_link_sent',
+      message: `✉️ 50% Payment Link ($${Number(deposit).toLocaleString(undefined, {minimumFractionDigits:2})}) sent to ${project.customerName} from ${fromEmail}.`,
+      link: paymentLink,
+      from: fromEmail,
+      channels: ['email', 'sms', 'whatsapp'],
+      sentAt: new Date().toISOString(),
+      status: 'sent',
+    };
+    if (!AppData.notifications) AppData.notifications = [];
+    AppData.notifications.push(notification);
+
+    // Show confirmation modal on screen
+    this.showPaymentEmailModal(project, fromEmail, deposit, fullAmount, paymentLink, plainBody);
+  },
+
+  showPaymentEmailModal(project, fromEmail, deposit, fullAmount, paymentLink, body) {
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+
+    overlay.innerHTML = `
+      <div class="modal-overlay" style="display: flex; justify-content: center; align-items: center; padding: 1rem;">
+        <div class="modal" style="display: block; max-width: 580px;">
+          <div class="modal-header">
+            <h3>✉️ 50% Deposit Email Dispatched</h3>
+            <button class="modal-close" onclick="Proposals.closeCustomerPortal()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div style="background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+              <div style="font-weight: 700; color: #047857; margin-bottom: 0.25rem;">
+                ✅ Approval Email Generated & Sent via ${fromEmail}
+              </div>
+              <div style="font-size: 0.8125rem; color: var(--text-secondary);">
+                Recipient: <strong>${project.customerName}</strong> (${project.email || 'Customer on file'})
+              </div>
+            </div>
+
+            <div style="background: var(--bg-body); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                <span>Full Project Amount:</span>
+                <strong>$${Number(fullAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9375rem; color: var(--primary); font-weight: 700;">
+                <span>50% Deposit Due:</span>
+                <span>$${Number(deposit).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-muted);">
+                <span>Company Sender:</span>
+                <span>${fromEmail}</span>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.375rem;">50% Payment Link:</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" value="${paymentLink}" readonly style="flex: 1; padding: 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text-primary);">
+                <button class="btn btn-secondary" onclick="copyLink('${paymentLink}')" style="white-space: nowrap;">Copy Link</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+              <a href="mailto:${project.email || ''}?from=${encodeURIComponent(fromEmail)}&subject=${encodeURIComponent(`Proposal Approved: 50% Deposit Payment Link - ABC Constructions (${project.id})`)}&body=${encodeURIComponent(body)}" class="btn btn-primary" style="flex: 1; text-align: center; text-decoration: none; padding: 0.625rem;" target="_blank">
+                ✉️ Open in Email Client
+              </a>
+              <button class="btn btn-secondary" onclick="Proposals.closeCustomerPortal()" style="flex: 1;">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    overlay.style.display = 'flex';
   },
 
   notifyDenial(project) {
